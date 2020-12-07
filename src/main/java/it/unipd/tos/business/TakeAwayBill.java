@@ -4,6 +4,9 @@
 
 package it.unipd.tos.business;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +19,16 @@ import it.unipd.tos.model.MenuItem;
 import it.unipd.tos.model.User;
 
 public class TakeAwayBill {
+
+    List<String> ordersGifted = new ArrayList<>();
+
+    double getRandomValue() {
+        return Math.random();
+    }
+
+    int getCurrentHour() {
+        return LocalTime.now().getHour();
+    }
 
     void checkDomain(List<MenuItem> items)
             throws TakeAwayBillException {
@@ -30,9 +43,26 @@ public class TakeAwayBill {
         }
     }
 
+    boolean giftOrder(User user) {
+        if(ordersGifted.size() < 10 && getCurrentHour() == 18) {
+            boolean userIsMinor = user.birthday.plusYears(18)
+                    .isAfter(LocalDate.now());
+            if (userIsMinor && !ordersGifted.contains(user.email)
+                    && getRandomValue() < 0.5) {
+                ordersGifted.add(user.email);
+                return true;
+            }
+        }
+        return false;
+    }
+
     double getOrderPrice(List<MenuItem> itemsOrdered, User user)
             throws TakeAwayBillException {
         checkDomain(itemsOrdered);
+
+        if(giftOrder(user)) {
+            return 0;
+        }
 
         final Map<ItemType, Double> orderPrice =
                 Arrays.stream(ItemType.values())

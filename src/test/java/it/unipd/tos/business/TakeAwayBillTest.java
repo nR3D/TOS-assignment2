@@ -8,6 +8,7 @@ import it.unipd.tos.business.exception.TakeAwayBillException;
 import it.unipd.tos.model.User;
 import it.unipd.tos.model.MenuItem;
 import it.unipd.tos.model.ItemType;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -20,8 +21,55 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class TakeAwayBillTest {
 
-    private final TakeAwayBill bill = new TakeAwayBill();
+    static class MockTakeAwayBill extends TakeAwayBill {
+        private double mockRand;
+        private int mockHour;
+
+        MockTakeAwayBill() {
+            setMockRandom(false);
+            setMockHour(15);
+        }
+
+        @Override
+        double getRandomValue() {
+            return mockRand;
+        }
+
+        void setMockRandom(boolean b) {
+            mockRand = b ? 0.3 : 0.8;
+        }
+
+        @Override
+        int getCurrentHour() {
+            return mockHour;
+        }
+
+        void setMockHour(int h) {
+            mockHour = h;
+        }
+    }
+
+    private MockTakeAwayBill bill;
     private final double DELTA_OP = 0.009;
+
+    @BeforeEach
+    public void resetBill() {
+        bill = new MockTakeAwayBill();
+    }
+
+    @Test
+    public void getRandomValue_BoundaryLimits_ReturnBetween0and1() {
+        TakeAwayBill realBill = new TakeAwayBill();
+        double rand = realBill.getRandomValue();
+        assertTrue(rand >= 0 && rand <= 1);
+    }
+
+    @Test
+    public void getCurrentHour_BoundaryLimits_ReturnBetween0and23() {
+        TakeAwayBill realBill = new TakeAwayBill();
+        int hour = realBill.getCurrentHour();
+        assertTrue(hour >= 0 && hour < 24);
+    }
 
     @Test
     public void checkDomain_EmptyOrder_ThrowsTakeAwayBillException() {
@@ -204,6 +252,95 @@ public class TakeAwayBillTest {
                 new User("Gertrude", "Castello", "grcastle@gmail.com",
                         LocalDate.of(1972, 11, 1))
         );
+        assertEquals(result, 10, DELTA_OP);
+    }
+
+    @Test
+    public void giftOrder_AlternateGiftsMinorsAt18_CalculateGifts() {
+        bill.setMockHour(18);
+        for(int i = 0; i < 25; ++i) {
+            bill.setMockRandom( i%2 == 0 );
+            boolean result = bill.giftOrder(
+                    new User("Marco", "Rossi",
+                            String.format("marco%s@gmail.com", i),
+                            LocalDate.of(2009, 4, 1))
+            ),
+                    expected = i%2==0 && i<20;
+            assertEquals(result, expected);
+        }
+    }
+
+    @Test
+    public void giftOrder_NoGiftsOnlyAdultsAt18_CalculateWithoutGifts() {
+        bill.setMockRandom(true);
+        bill.setMockHour(18);
+        for(int i = 0; i < 10; ++i) {
+            boolean result = bill.giftOrder(
+                    new User("Elisa", "Mila",
+                            String.format("milly%s@gmail.com", i),
+                            LocalDate.of(1995, 8, 3))
+            );
+            assertFalse(result);
+        }
+    }
+
+    @Test
+    public void giftOrder_NoMultipleGiftToAChildAt18_CalculateOnlyOneGift() {
+        bill.setMockRandom(true);
+        bill.setMockHour(18);
+        User child = new User("Tommaso", "Ferro", "tommy11@gmail.com",
+                LocalDate.of(2011, 10, 20));
+        assertTrue(bill.giftOrder(child));
+        for(int i = 0; i < 5; ++i) {
+            assertFalse(bill.giftOrder(child));
+        }
+    }
+
+    @Test
+    public void giftOrder_NoGiftsMinorsNotAt18_CalculateWithoutGifts() {
+        bill.setMockRandom(true);
+        bill.setMockHour(15);
+        for(int i = 0; i < 10; ++i) {
+            boolean result = bill.giftOrder(
+                    new User("Mia", "Speranza",
+                            String.format("speranza%s@mia.it", i),
+                            LocalDate.of(2008, 7, 4))
+            );
+            assertFalse(result);
+        }
+    }
+
+    @Test
+    public void getOrderPrice_OrderIsGifted_CalculatedPriceIsZero()
+            throws TakeAwayBillException {
+        TakeAwayBill mockGiftBill = new TakeAwayBill() {
+            @Override
+            boolean giftOrder(User user) {
+                return true;
+            }
+        };
+        double result = mockGiftBill.getOrderPrice(Collections.singletonList(
+                new MenuItem(ItemType.BEVANDA, "CafféMoltoLungo", 10)
+                ),
+                new User("Dina", "Meren", "meren@dina.it",
+                        LocalDate.of(2000, 1, 1)));
+        assertEquals(result, 0, DELTA_OP);
+    }
+
+    @Test
+    public void getOrderPrice_OrderIsNotGifted_CalculateNormalPrice()
+            throws TakeAwayBillException {
+        TakeAwayBill mockGiftBill = new TakeAwayBill() {
+            @Override
+            boolean giftOrder(User user) {
+                return false;
+            }
+        };
+        double result = mockGiftBill.getOrderPrice(Collections.singletonList(
+                new MenuItem(ItemType.BEVANDA, "CafféMoltoLungo", 10)
+                ),
+                new User("Dina", "Meren", "meren@dina.it",
+                        LocalDate.of(2000, 1, 1)));
         assertEquals(result, 10, DELTA_OP);
     }
 }
