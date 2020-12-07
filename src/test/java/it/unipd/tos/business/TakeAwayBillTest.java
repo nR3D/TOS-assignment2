@@ -64,4 +64,38 @@ public class TakeAwayBillTest {
                 expected = {10.75, 11.25, 2.75, 0};
         assertArrayEquals(results, expected, DELTA_OP);
     }
+
+    @Test
+    public void getOrderPrice_MoreThanFiveGelatoPerBill_CalculateSumWithSale()
+            throws TakeAwayBillException {
+        double[] results = {
+                bill.getOrderPrice(Arrays.asList(
+                        new MenuItem(ItemType.GELATO, "Fragola", 2),
+                        new MenuItem(ItemType.BEVANDA, "Caffé", 1.2),
+                        new MenuItem(ItemType.GELATO, "Amarena", 2.5),
+                        new MenuItem(ItemType.GELATO, "CoppaVuota", 0.2),
+                        new MenuItem(ItemType.GELATO, "Wasabi", 4),
+                        new MenuItem(ItemType.BUDINO, "Cioccolato", 3.1),
+                        new MenuItem(ItemType.GELATO, "Caviale", 20),
+                        new MenuItem(ItemType.GELATO, "Mandarino", 2)
+                        ),
+                        new User("Luigi", "Mario", "itsame@luigi.jp",
+                                LocalDate.of(1983, 3, 10))
+                ),
+                bill.getOrderPrice(Arrays.asList(
+                        new MenuItem(ItemType.GELATO, "Panna", 3),
+                        new MenuItem(ItemType.GELATO, "Lime", 2.25),
+                        new MenuItem(ItemType.GELATO, "Pizzaiola", 1.5),
+                        new MenuItem(ItemType.GELATO, "Cookie", 1),
+                        new MenuItem(ItemType.GELATO, "Menta", 2),
+                        new MenuItem(ItemType.GELATO, "Mentolo", 1),
+                        new MenuItem(ItemType.GELATO, "Campari", 5)
+                        ),
+                        new User("Mario", "Mario", "itsame@mario.jp",
+                                LocalDate.of(1983, 3, 10))
+                ),
+        },
+                expected = {34.9, 15.25};
+        assertArrayEquals(results, expected, DELTA_OP);
+    }
 }
