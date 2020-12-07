@@ -19,8 +19,11 @@ public class TakeAwayBill {
 
     void checkDomain(List<MenuItem> items)
             throws TakeAwayBillException {
+        if(items.size() > 30) {
+            throw TakeAwayBillException.productLimit();
+        }
         if(items.stream().anyMatch(i -> i.price < 0)) {
-            throw new TakeAwayBillException();
+            throw TakeAwayBillException.negativePrice();
         }
     }
 

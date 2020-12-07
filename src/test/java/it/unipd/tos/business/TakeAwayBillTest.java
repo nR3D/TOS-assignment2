@@ -8,28 +8,55 @@ import it.unipd.tos.business.exception.TakeAwayBillException;
 import it.unipd.tos.model.User;
 import it.unipd.tos.model.MenuItem;
 import it.unipd.tos.model.ItemType;
+import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
-import org.junit.Test;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TakeAwayBillTest {
 
     private final TakeAwayBill bill = new TakeAwayBill();
     private final double DELTA_OP = 0.009;
 
-    @Test(expected = TakeAwayBillException.class)
-    public void checkDomain_NegativeItemPrice_ThrowsTakeAwayBillException()
-            throws TakeAwayBillException {
-        bill.checkDomain(Arrays.asList(
+    @Test
+    public void checkDomain_NegativeItemPrice_ThrowsTakeAwayBillException() {
+        TakeAwayBillException thrown = assertThrows(
+                TakeAwayBillException.class,
+                () -> bill.checkDomain(Arrays.asList(
                 new MenuItem(ItemType.GELATO, "Vaniglia", 3),
                 new MenuItem(ItemType.BEVANDA, "atnaF", -2)
                 )
-        );
+        ));
+        assertEquals(TakeAwayBillException.negativePrice().getMessage(),
+                thrown.getMessage());
+    }
+
+    @Test
+    public void checkDomain_MoreThan30Orders_ThrowsTakeAwayBillException() {
+        List<MenuItem> items = new ArrayList<>();
+        for(int i = 0; i < 35; ++i) {
+            items.add(new MenuItem(ItemType.GELATO, "Vaniglia", 1));
+        }
+        TakeAwayBillException thrown = assertThrows(
+                TakeAwayBillException.class,
+                () -> bill.checkDomain(items));
+        assertEquals(TakeAwayBillException.productLimit().getMessage(),
+                thrown.getMessage());
+    }
+
+    @Test
+    public void checkDomain_Exactly30Orders_ExceptionNotThrown()
+            throws TakeAwayBillException {
+        List<MenuItem> items = new ArrayList<>();
+        for(int i = 0; i < 30; ++i) {
+            items.add(new MenuItem(ItemType.GELATO, "Vaniglia", 1));
+        }
+        bill.checkDomain(items);
     }
 
     @Test
