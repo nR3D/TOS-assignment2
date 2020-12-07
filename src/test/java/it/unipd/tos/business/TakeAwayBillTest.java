@@ -15,6 +15,7 @@ import java.util.Collections;
 
 import org.junit.Test;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 public class TakeAwayBillTest {
 
@@ -97,5 +98,44 @@ public class TakeAwayBillTest {
         },
                 expected = {34.9, 15.25};
         assertArrayEquals(results, expected, DELTA_OP);
+    }
+
+    @Test
+    public void getOrderPrice_MoreThan50EuroGelatoBudino_CalculateSumWithSale()
+            throws TakeAwayBillException {
+        double[] results = {
+                bill.getOrderPrice(Arrays.asList(
+                        new MenuItem(ItemType.GELATO, "ExtraPanna", 8),
+                        new MenuItem(ItemType.BUDINO, "ExtraCioccolato", 12),
+                        new MenuItem(ItemType.GELATO, "ExtraCosto", 31)
+                        ),
+                        new User("Filippa", "Calla", "filcal@gmail.com",
+                                LocalDate.of(1999, 11, 11))
+                ),
+                bill.getOrderPrice(Arrays.asList(
+                        new MenuItem(ItemType.GELATO, "Pistacchio", 37.25),
+                        new MenuItem(ItemType.BUDINO, "Arachidi", 20.5),
+                        new MenuItem(ItemType.BEVANDA, "Sprite", 2.25)
+                        ),
+                        new User("Salvo", "Silvestri", "sal@sil.it",
+                                LocalDate.of(1975, 12, 25))
+                ),
+        },
+                expected = {45.9, 54};
+        assertArrayEquals(results, expected, DELTA_OP);
+    }
+
+    @Test
+    public void getOrderPrice_Exactly50EuroGelatoBudino_CalculateFullPrice()
+            throws TakeAwayBillException {
+        double result = bill.getOrderPrice(Arrays.asList(
+                new MenuItem(ItemType.GELATO, "Nettare", 22),
+                new MenuItem(ItemType.BEVANDA, "Champagne", 17.5),
+                new MenuItem(ItemType.BUDINO, "Budisì", 10.5)
+                ),
+                new User("Franco", "Vero", "franco50@yahoo.com",
+                        LocalDate.of(1950, 2, 12))
+        );
+        assertEquals(result, 50, DELTA_OP);
     }
 }

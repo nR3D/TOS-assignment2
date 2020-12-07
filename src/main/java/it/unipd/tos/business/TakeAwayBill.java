@@ -4,7 +4,11 @@
 
 package it.unipd.tos.business;
 
-import  java.util.List;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import it.unipd.tos.business.exception.TakeAwayBillException;
 import it.unipd.tos.model.ItemType;
@@ -24,11 +28,17 @@ public class TakeAwayBill {
             throws TakeAwayBillException {
         checkDomain(itemsOrdered);
 
-        double orderPrice = 0;
+        final Map<ItemType, Double> orderPrice =
+                Arrays.stream(ItemType.values())
+                        .collect(
+                                Collectors.toMap(Function.identity(), i -> 0.0)
+                        );
+
         Double cheapestGelato = null;
         int numGelato = 0;
         for(MenuItem item : itemsOrdered) {
-            orderPrice += item.price;
+            orderPrice.put(item.itemType,
+                    orderPrice.get(item.itemType) + item.price);
 
             if(item.itemType == ItemType.GELATO) {
                 ++numGelato;
@@ -37,9 +47,21 @@ public class TakeAwayBill {
                 }
             }
         }
+
         if(numGelato > 5) {
-            orderPrice -= cheapestGelato / 2;
+            orderPrice.put(ItemType.GELATO,
+                    orderPrice.get(ItemType.GELATO) - cheapestGelato / 2);
         }
-        return orderPrice;
+
+        double totalPrice = orderPrice.values().stream()
+                .mapToDouble(i -> i)
+                .sum();
+
+        if(orderPrice.get(ItemType.GELATO) +
+                orderPrice.get(ItemType.BUDINO) > 50) {
+            totalPrice *= 0.9;
+        }
+
+        return totalPrice;
     }
 }
