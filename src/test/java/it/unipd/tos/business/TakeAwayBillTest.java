@@ -24,6 +24,15 @@ public class TakeAwayBillTest {
     private final double DELTA_OP = 0.009;
 
     @Test
+    public void checkDomain_EmptyOrder_ThrowsTakeAwayBillException() {
+        TakeAwayBillException thrown = assertThrows(
+                TakeAwayBillException.class,
+                () -> bill.checkDomain(Collections.emptyList()));
+        assertEquals(TakeAwayBillException.emptyOrder().getMessage(),
+                thrown.getMessage());
+    }
+
+    @Test
     public void checkDomain_NegativeItemPrice_ThrowsTakeAwayBillException() {
         TakeAwayBillException thrown = assertThrows(
                 TakeAwayBillException.class,
@@ -83,13 +92,9 @@ public class TakeAwayBillTest {
                         ),
                         new User("Genoveffa", "Berna", "g.berna@hotmail.it",
                                 LocalDate.of(1987, 7, 15))
-                ),
-                bill.getOrderPrice(Collections.emptyList(),
-                        new User("Massimo", "Bacone", "mbacon@gmail.com",
-                                LocalDate.of(2003, 8, 11))
                 )
         },
-                expected = {10.75, 11.25, 2.75, 0};
+                expected = {10.75, 11.25, 3.25};
         assertArrayEquals(results, expected, DELTA_OP);
     }
 
@@ -164,5 +169,41 @@ public class TakeAwayBillTest {
                         LocalDate.of(1950, 2, 12))
         );
         assertEquals(result, 50, DELTA_OP);
+    }
+
+    @Test
+    public void getOrderPrice_LessThan10Euro_CalculateWithCommission()
+            throws TakeAwayBillException {
+        double[] results = {
+                bill.getOrderPrice(Arrays.asList(
+                        new MenuItem(ItemType.BEVANDA, "Fragola", 2.5),
+                        new MenuItem(ItemType.BUDINO, "Cioccolato", 4.25)
+                        ),
+                        new User("Alfredo", "Costanzo", "al@fred.it",
+                                LocalDate.of(1966, 7, 15))
+                ),
+                bill.getOrderPrice(Collections.singletonList(
+                        new MenuItem(ItemType.BUDINO, "BudinoSpecial", 8)
+                        ),
+                        new User("Luca", "Bianchi", "luca@bianchi.it",
+                                LocalDate.of(2001, 1, 30))
+                )
+        },
+                expected = {7.25, 8.5};
+        assertArrayEquals(results, expected, DELTA_OP);
+    }
+
+    @Test
+    public void getOrderPrice_Exactly10Euro_CalculateWithoutCommission()
+            throws TakeAwayBillException {
+        double result = bill.getOrderPrice(Arrays.asList(
+                new MenuItem(ItemType.BEVANDA, "Amaro", 3),
+                new MenuItem(ItemType.BUDINO, "Vaniglia", 3.5),
+                new MenuItem(ItemType.GELATO, "Nocciola", 3.5)
+                ),
+                new User("Gertrude", "Castello", "grcastle@gmail.com",
+                        LocalDate.of(1972, 11, 1))
+        );
+        assertEquals(result, 10, DELTA_OP);
     }
 }

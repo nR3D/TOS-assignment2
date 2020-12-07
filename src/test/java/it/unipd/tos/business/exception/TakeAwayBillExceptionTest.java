@@ -7,6 +7,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class TakeAwayBillExceptionTest {
 
     @Test
+    public void emptyOrder_MsgCreation_ReturnSameMsgAsDataField() {
+        assertEquals(TakeAwayBillException.emptyOrderMsg,
+                TakeAwayBillException.emptyOrder().getMessage());
+    }
+
+    @Test
     public void negativePrice_MsgCreation_ReturnSameMsgAsDataField() {
         assertEquals(TakeAwayBillException.negativePriceMsg,
                 TakeAwayBillException.negativePrice().getMessage());

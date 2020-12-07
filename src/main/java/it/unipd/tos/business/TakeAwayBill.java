@@ -22,6 +22,9 @@ public class TakeAwayBill {
         if(items.size() > 30) {
             throw TakeAwayBillException.productLimit();
         }
+        if(items.size() == 0) {
+            throw TakeAwayBillException.emptyOrder();
+        }
         if(items.stream().anyMatch(i -> i.price < 0)) {
             throw TakeAwayBillException.negativePrice();
         }
@@ -63,6 +66,10 @@ public class TakeAwayBill {
         if(orderPrice.get(ItemType.GELATO) +
                 orderPrice.get(ItemType.BUDINO) > 50) {
             totalPrice *= 0.9;
+        }
+
+        if(totalPrice < 10) {
+            totalPrice += 0.5;
         }
 
         return totalPrice;
